@@ -31,7 +31,7 @@ public class CropImageActivity extends AppCompatActivity {
     public static final int FROM_FILE = 1314;
     public static final int FROM_CAREMA = 1315;
 
-    public static Bitmap image;
+    private static Bitmap image;//当前图片
     private CropImageView cropImageView;
     private String imageTemp = "";
 
@@ -84,7 +84,7 @@ public class CropImageActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem menuItem) {
         switch (menuItem.getItemId()) {
             case R.id.ok:
-                image = cropImageView.getCroppedBitmap();
+                BitmapHelper.saveBitmap(imageTemp, cropImageView.getCroppedBitmap());
                 setResult(RESULT_OK);
                 finish();
                 break;
@@ -105,15 +105,8 @@ public class CropImageActivity extends AppCompatActivity {
             case FROM_FILE:
                 Uri uri = data.getData();
                 String path = BitmapHelper.getRealFilePath(CropImageActivity.this, uri);
-                Log.e("rxz", "real path=" + path);
                 degree = BitmapHelper.readPictureDegree(path);
                 image = BitmapHelper.readBitmap(path, MAX_WIDTH, degree);
-                /*try {
-                    image = BitmapFactory.decodeStream(cr.openInputStream(uri));
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                    image= null;
-                }*/
                 break;
             case FROM_CAREMA:
                 degree = BitmapHelper.readPictureDegree(imageTemp);
