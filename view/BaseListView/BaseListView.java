@@ -12,6 +12,7 @@ import android.widget.TextView;
 
 
 
+
 /**
  * author：rongxianzhuo on 2016/7/28 09:59
  * email：rongxianzhuo@gmail.com
@@ -21,14 +22,16 @@ import android.widget.TextView;
  * 2.xml中加入该View
  * 3.java中调用其setup方法
  * 4.在回调中加载数据完成后要调用loadingFinish() 方法
+ *
+ * 使用规则：所有的数据加载都应该写在refresh(), 和 loadMore() 的接口里，setup后的第一次加载可以调用
  */
 public class BaseListView extends RelativeLayout {
 
     public interface Listener {
         int listSize();//列表中Item个数
 
-        void refresh();//刷新的回调
-        void loadMore();//加载更多时执行的回调
+        void refresh();//用户手动下来刷新的回调
+        void loadMore();//滑动到底部，需要加载更多时执行的回调
     }
 
     private RecyclerView recyclerView;
@@ -56,7 +59,8 @@ public class BaseListView extends RelativeLayout {
             public void onRefresh() {
                 if (loadingState % 2 == 1) return;
                 loadingState++;
-                listener.refresh();
+                if (listener == null) swipeRefreshLayout.setRefreshing(false);
+                else listener.refresh();
             }
         });
         swipeRefreshLayout.setColorSchemeResources(android.R.color.holo_red_light
@@ -107,9 +111,9 @@ public class BaseListView extends RelativeLayout {
                         @Override
                         public void run() {
                             swipeRefreshLayout.setRefreshing(true);
+                            listener.loadMore();
                         }
                     });
-                    listener.loadMore();
                 }
             }
         });
@@ -131,18 +135,15 @@ public class BaseListView extends RelativeLayout {
     }
 
     public void loadingFinish() {
-        if (loadingState % 2 == 0) loadingState+= 2;
-        else loadingState++;
+        if (!swipeRefreshLayout.isRefreshing()) return;
         swipeRefreshLayout.post(new Runnable() {
             @Override
             public void run() {
+                if (loadingState % 2 == 0) loadingState+= 2;
+                else loadingState++;
                 swipeRefreshLayout.setRefreshing(false);
             }
         });
-    }
-
-    public RecyclerView getRecyclerView() {
-        return recyclerView;
     }
 
     /**
@@ -157,6 +158,23 @@ public class BaseListView extends RelativeLayout {
         }
     }
 
+    /**
+     * 通知进行第一次加载
+     * BaseListView 会调用loadMore接口，不要在额外的地方加载数据
+     */
+    public void notifyFirstLoading() {
+        if (listener == null) return;
+        swipeRefreshLayout.post(new Runnable() {
+            @Override
+            public void run() {
+                if (loadingState % 2 == 0) loadingState++;
+                else loadingState += 2;
+                swipeRefreshLayout.setRefreshing(true);
+                listener.refresh();
+            }
+        });
+    }
+
     public void canRefresh(boolean b) {
         swipeRefreshLayout.setEnabled(b);
     }
@@ -164,5 +182,6 @@ public class BaseListView extends RelativeLayout {
     public void canLoadMore(boolean b) {
         canLoadMore = b;
     }
+
 
 }
