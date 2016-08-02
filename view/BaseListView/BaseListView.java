@@ -106,6 +106,7 @@ public class BaseListView extends RelativeLayout {
                 super.onScrollStateChanged(recyclerView, newState);
                 if (loadingState % 2 == 1) return;
                 if (scrollToBottom(newState) && finalDy > 10) {
+                    finalDy = 0;
                     loadingState++;
                     swipeRefreshLayout.post(new Runnable() {
                         @Override
